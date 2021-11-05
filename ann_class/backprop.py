@@ -1,139 +1,153 @@
 """
 backpropagation example for deep learning in python class with sigmoid activation
 """
-from numpy import argmax, array, vstack, zeros, exp, log
+from types import SimpleNamespace
+from numpy import exp, log, array, vstack, zeros, argmax
 from numpy.random import randn
-from matplotlib.pyplot import show, plot, scatter, figure
+from matplotlib.pyplot import show, scatter, plot, figure
 
 
-def forward(x_var, w1_var, b1_var, w2_var, b2_var):
+def decorator(func):
+    """
+    decorator function
+    """
+
+    def wrapper():
+        self = func()
+        if self:
+            for items in self.__dict__.items():
+                print(items)
+        show()
+
+    return wrapper
+
+
+def forward(self):
     """
     forward function
     """
-    z_var = 1 / (1 + exp(-x_var.dot(w1_var) - b1_var))
-    a_var = z_var.dot(w2_var) + b2_var
+    if not any([self.X.any(), self.W1, self.b1, self.W2, self.b2]):
+        raise Exception(self.X, self.W1, self.b1, self.W2, self.b2)
+    z_var = 1 / (1 + exp(-self.X.dot(self.W1) - self.b1))
+    a_var = z_var.dot(self.W2) + self.b2
     exp_a = exp(a_var)
     y_var = exp_a / exp_a.sum(axis=1, keepdims=True)
     return y_var, z_var
 
 
-def classification_rate(y_var, p_var):
+def classification_rate(self):
     """
     determine the classification rate (num correct / num total)
     """
+    if not any([self.Y.any(), self.P]):
+        raise Exception(self.Y, self.P)
     n_correct = 0
     n_total = 0
-    for index, value in enumerate(y_var):
+    for index, value in enumerate(self.Y):
         n_total += 1
-        if value == p_var[index]:
+        if value == self.P[index]:
             n_correct += 1
     return float(n_correct) / n_total
 
 
-def derivative_w2(z_var, t_var, y_var):
+def derivative_w2(self):
     """
-    N, K = T.shape
-    M = Z.shape[1]
-    ret1 = np.zeros((M, K))
-    for n in xrange(N):
-        for m in xrange(M):
-            for k in xrange(K):
-                ret1[m,k] += (T[n,k] - Y[n,k])*Z[n,m]
+    derivative w2 function
     """
-    ret4 = z_var.T.dot(t_var - y_var)
+    if not any([self.T.any(), self.hidden, self.output]):
+        raise Exception(self.T, self.hidden, self.output)
+    ret4 = self.hidden.T.dot(self.T - self.output)
     return ret4
 
 
-def derivative_w1(x_var, z_var, t_var, y_var, w2_var):
+def derivative_w1(self):
     """
-    N, D = X.shape
-    M, K = W2.shape
-    ret1 = np.zeros((X.shape[1], M))
-    for n in xrange(N):
-        for k in xrange(K):
-            for m in xrange(M):
-                for d in xrange(D):
-                    ret1[d,m] += (T[n,k] - Y[n,k])*W2[m,k]*Z[n,m]*(1 - Z[n,m])*X[n,d]
+    derivative w1 function
     """
-    dz_var = (t_var - y_var).dot(w2_var.T) * z_var * (1 - z_var)
-    ret2 = x_var.T.dot(dz_var)
+    if not any([self.T.any(), self.hidden, self.output, self.X, self.W2]):
+        raise Exception(self.T, self.hidden, self.output, self.X, self.W2)
+    d_z = (self.T - self.output).dot(self.W2.T) * self.hidden * (1 - self.hidden)
+    ret2 = self.X.T.dot(d_z)
     return ret2
 
 
-def derivative_b2(t_var, y_var):
+def derivative_b2(self):
     """
     derivative b2 function
     """
-    return (t_var - y_var).sum(axis=0)
+    if not any([self.T.any(), self.output]):
+        raise Exception(self.T, self.output)
+    return (self.T - self.output).sum(axis=0)
 
 
-def derivative_b1(t_var, y_var, w2_var, z_var):
+def derivative_b1(self):
     """
     derivative b1 function
     """
-    return ((t_var - y_var).dot(w2_var.T) * z_var * (1 - z_var)).sum(axis=0)
+    if not any([self.T.any(), self.output, self.W2, self.hidden]):
+        raise Exception(self.T, self.output, self.W2, self.hidden)
+    return ((self.T - self.output).dot(self.W2.T) * self.hidden * (1 - self.hidden)).sum(axis=0)
 
 
-def cost(t_var, y_var):
+def cost(self):
     """
     cost function
     """
-    tot = t_var * log(y_var)
+    if not any([self.T.any(), self.output]):
+        raise Exception(self.T, self.output)
+    tot = self.T * log(self.output)
     return tot.sum()
 
 
-def main():
+@decorator
+def main(self=SimpleNamespace()):
     """
-    create the data
+    main function
     """
-    var = {"Nclass": 500, "D": 2, "M": 3, "K": 3}
-    var |= {
-        "X1": randn(var["Nclass"], var["D"]) + array([0, -2]),
-        "X2": randn(var["Nclass"], var["D"]) + array([2, 2]),
-        "X3": randn(var["Nclass"], var["D"]) + array([-2, 2]),
-    }
-    var |= {
-        "X": vstack([var["X1"], var["X2"], var["X3"]]),
-        "Y": array([0] * var["Nclass"] + [1] * var["Nclass"] + [2] * var["Nclass"]),
-    }
-    var |= {"N": len(var["Y"])}
-    var |= {"T": zeros((var["N"], var["K"]))}
-    for i in range(var["N"]):
-        var["T"][i, var["Y"][i]] = 1
+    self.Nclass = 500
+    self.D = 2
+    self.M = 3
+    self.K = 3
+    self.X1 = randn(self.Nclass, self.D) + array([0, -2])
+    self.X2 = randn(self.Nclass, self.D) + array([2, 2])
+    self.X3 = randn(self.Nclass, self.D) + array([-2, 2])
+    self.X = vstack([self.X1, self.X2, self.X3])
+    self.Y = array([0] * self.Nclass + [1] * self.Nclass + [2] * self.Nclass)
+    self.N = len(self.Y)
+    self.T = zeros((self.N, self.K))
+    for i in range(self.N):
+        self.T[i, self.Y[i]] = 1
 
     figure()
-    scatter(var["X"][:, 0], var["X"][:, 1], c=var["Y"], s=100, alpha=0.5)
-    var |= {
-        "W1": randn(var["D"], var["M"]),
-        "b1": randn(var["M"]),
-        "W2": randn(var["M"], var["K"]),
-        "b2": randn(var["K"])
-    }
+    scatter(self.X[:, 0], self.X[:, 1], c=self.Y, s=100, alpha=0.5)
+    self.W1 = randn(self.D, self.M)
+    self.b1 = randn(self.M)
+    self.W2 = randn(self.M, self.K)
+    self.b2 = randn(self.K)
     learning_rate = 1e-3
     costs = []
     for epoch in range(1000):
-        output, hidden = forward(var["X"], var["W1"], var["b1"], var["W2"], var["b2"])
+        self.output, self.hidden = forward(self)
         if epoch % 100 == 0:
-            c_var = cost(var["T"], output)
-            p_var = argmax(output, axis=1)
-            r_var = classification_rate(var["Y"], p_var)
-            print("cost:", c_var, "classification_rate:", r_var)
-            costs.append(c_var)
-
-        gw2 = derivative_w2(hidden, var["T"], output)
-        gb2 = derivative_b2(var["T"], output)
-        gw1 = derivative_w1(var["X"], hidden, var["T"], output, var["W2"])
-        gb1 = derivative_b1(var["T"], output, var["W2"], hidden)
-
-        var["W2"] += learning_rate * gw2
-        var["b2"] += learning_rate * gb2
-        var["W1"] += learning_rate * gw1
-        var["b1"] += learning_rate * gb1
+            self.c = cost(self)
+            self.P = argmax(self.output, axis=1)
+            self.r = classification_rate(self)
+            print("cost:", self.c, "classification_rate:", self.r)
+            costs.append(self.c)
+        gw2 = derivative_w2(self)
+        gb2 = derivative_b2(self)
+        gw1 = derivative_w1(self)
+        gb1 = derivative_b1(self)
+        self.W2 += learning_rate * gw2
+        self.b2 += learning_rate * gb2
+        self.W1 += learning_rate * gw1
+        self.b1 += learning_rate * gb1
 
     figure()
     plot(costs)
 
+    return self
+
 
 if __name__ == "__main__":
     main()
-    show()
