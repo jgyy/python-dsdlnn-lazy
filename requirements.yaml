@@ -13,7 +13,9 @@ dependencies:
   - pip
   - pylint
   - python
+  - requests
   - scikit-learn
+  - typing-extensions
   - pip:
       - Flask-Testing
       - tensorflow-macos

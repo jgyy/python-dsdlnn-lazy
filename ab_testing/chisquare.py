@@ -1,7 +1,7 @@
 """
 Bayesin Machine Learning in Python: A/B Testing
 """
-from numpy import zeros, empty
+from numpy import float32, zeros, empty, ones
 from numpy.random import random
 from matplotlib.pyplot import plot, show
 from scipy.stats import chi2
@@ -46,22 +46,23 @@ def get_p_value(t_val):
     return p_val
 
 
-def run_experiment(p1, p2, N):
-    data = DataGenerator(p1, p2)
-    p_values = np.empty(N)
-    T = np.zeros((2, 2)).astype(np.float32)
-    for i in range(N):
-        c1, c2 = data.next()
-        T[0, c1] += 1
-        T[1, c2] += 1
-        # ignore the first 10 values
+def run_experiment(p_1, p_2, n_val):
+    """
+    run experiment function
+    """
+    data = DataGenerator(p_1, p_2)
+    p_values = empty(n_val)
+    t_val = zeros((2, 2)).astype(float32)
+    for i in range(n_val):
+        c_1, c_2 = data.next()
+        t_val[0, c_1] += 1
+        t_val[1, c_2] += 1
         if i < 10:
             p_values[i] = None
         else:
-            p_values[i] = get_p_value(T)
-    plt.plot(p_values)
-    plt.plot(np.ones(N) * 0.05)
-    plt.show()
+            p_values[i] = get_p_value(t_val)
+    plot(p_values)
+    plot(ones(n_val) * 0.05)
 
 
 if __name__ == "__main__":
