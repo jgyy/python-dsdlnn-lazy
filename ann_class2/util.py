@@ -61,7 +61,7 @@ def get_spiral():
 def get_transformed_data():
     print("Reading in and transforming data...")
 
-    if not exists(join(dirname(__file__), "train.csv")):
+    if not exists("train.csv"):
         print("Looking for train.csv")
         print(
             "You have not downloaded the data and/or not placed the files in the correct location."
@@ -70,7 +70,7 @@ def get_transformed_data():
         print("Place train.csv in the folder large_files adjacent to the class folder")
         sexit()
 
-    df = pd.read_csv(join(dirname(__file__), "train.csv"))
+    df = pd.read_csv("train.csv")
     data = df.values.astype(np.float32)
     np.random.shuffle(data)
 
@@ -110,7 +110,7 @@ def get_transformed_data():
 def get_normalized_data():
     print("Reading in and transforming data...")
 
-    if not exists(join(dirname(__file__), "train.csv")):
+    if not exists("train.csv"):
         print("Looking for train.csv")
         print(
             "You have not downloaded the data and/or not placed the files in the correct location."
@@ -119,7 +119,7 @@ def get_normalized_data():
         print("Place train.csv in the folder large_files adjacent to the class folder")
         sexit()
 
-    df = pd.read_csv(join(dirname(__file__), "train.csv"))
+    df = pd.read_csv("train.csv")
     data = df.values.astype(np.float32)
     np.random.shuffle(data)
     X = data[:, 1:]
