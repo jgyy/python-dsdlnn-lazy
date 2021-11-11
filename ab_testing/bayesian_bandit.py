@@ -80,4 +80,9 @@ def experiment():
 
 if __name__ == "__main__":
     experiment()
+    ban = Bandit(0.1)
+    print(ban.pull())
+    print(ban.sample())
+    assert isinstance(ban.pull(), bool)
+    assert 0.1 <= ban.sample() <= 1
     show()

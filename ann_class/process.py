@@ -49,5 +49,10 @@ def get_binary_data():
 
 
 if __name__ == "__main__":
-    print(get_data())
-    print(get_binary_data())
+    one, two, three, four = get_data()
+    print(one.shape, two.shape, three.shape, four.shape)
+    assert one.shape == (400, 8)
+    assert two.shape == (400,)
+    assert three.shape == (100, 8)
+    assert four.shape == (100,)
+    one, two, three, four = get_binary_data()
