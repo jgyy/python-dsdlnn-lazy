@@ -5,6 +5,8 @@ from types import SimpleNamespace
 from os.path import exists
 from sys import exit as sexit
 from numpy import (
+    min as nmin,
+    max as nmax,
     argmax,
     mean,
     vstack,
@@ -13,6 +15,7 @@ from numpy import (
     empty,
     place,
     zeros,
+    full,
     log,
     exp,
     cos,
@@ -94,7 +97,6 @@ def get_transformed_data():
     pca = PCA()
     x_train = pca.fit_transform(x_train)
     x_test = pca.transform(x_test)
-    plot_cumulative_variance(pca)
     x_train = x_train[:, :300]
     x_test = x_test[:, :300]
     m_u = x_train.mean(axis=0)
@@ -108,7 +110,7 @@ def get_normalized_data():
     """
     get normalized data function
     """
-    print("Reading in and transforming data...")
+    print("Reading in and get normalized data...")
     if not exists("train.csv"):
         print("Looking for train.csv")
         print(
@@ -240,6 +242,9 @@ def benchmark_full(self=SimpleNamespace()):
     self.CRtest = []
     self.lr = 0.00004
     self.reg = 0.01
+    print(nmin(self.Xtrain), nmax(self.Xtrain), self.Xtrain.shape)
+    print(nmin(self.W), nmax(self.W), self.W.shape)
+    print(nmin(self.b), nmax(self.b), self.b.shape)
     for i in range(500):
         self.p_y = forward(self.Xtrain, self.W, self.b)
         self.ll = cost(self.p_y, self.Ytrain_ind)
@@ -298,7 +303,9 @@ def benchmark_pca(self=SimpleNamespace()):
         self.LLtest.append(self.lltest)
         self.err = error_rate(self.p_y_test, self.Ytest)
         self.CRtest.append(self.err)
-        self.W += self.lr * (grad_w(self.Ytrain_ind, self.p_y, self.Xtrain) - self.reg * self.W)
+        self.W += self.lr * (
+            grad_w(self.Ytrain_ind, self.p_y, self.Xtrain) - self.reg * self.W
+        )
         self.b += self.lr * (gradb(self.Ytrain_ind, self.p_y) - self.reg * self.b)
         if i % 10 == 0:
             print("Cost at iteration %d: %.6f" % (i, self.ll))
@@ -316,20 +323,58 @@ def benchmark_pca(self=SimpleNamespace()):
 
 if __name__ == "__main__":
     xcloud, ycloud = get_clouds()
-    print(xcloud, xcloud.shape)
-    print(ycloud, ycloud.shape)
+    print(nmin(xcloud), nmax(xcloud), xcloud.shape)
+    print(nmin(ycloud), nmax(ycloud), ycloud.shape)
+    assert (-7 <= xcloud).all() and (xcloud <= 7).all()
     assert xcloud.shape == (1500, 2)
+    assert (ycloud >= 0).all() and (ycloud <= 2).all()
     assert ycloud.shape == (1500,)
 
     xspiral, yspiral = get_spiral()
-    print(xspiral, xspiral.shape)
-    print(yspiral, yspiral.shape)
+    print(nmin(xspiral), nmax(xspiral), xspiral.shape)
+    print(nmin(yspiral), nmax(yspiral), yspiral.shape)
+    assert (-12 <= xspiral).all() and (xspiral <= 12).all()
     assert xspiral.shape == (600, 2)
+    assert (yspiral >= 0).all() and (yspiral <= 2).all()
     assert yspiral.shape == (600,)
-    # print(benchmark_pca())
-    # print(benchmark_full())
-    # print(get_normalized_data())
-    # print(get_transformed_data())
-    # print(get_spiral())
+
+    one, two, three, four = get_transformed_data()
+    print(nmin(one), nmax(one), one.shape)
+    print(nmin(two), nmax(two), two.shape)
+    print(nmin(three), nmax(three), three.shape)
+    print(nmin(four), nmax(four), four.shape)
+    assert (one >= -9).all() and (one <= 9).all()
+    assert (two >= -9).all() and (two <= 9).all()
+    assert (three >= 0).all() and (three <= 9).all()
+    assert (four >= 0).all() and (four <= 9).all()
+    assert one.shape[0] == three.shape[0]
+    assert one.shape[1] == two.shape[1]
+    assert two.shape[0] == four.shape[0]
+    assert len(three.shape) == len(four.shape)
+
+    five, six, seven, eight = get_normalized_data()
+    print(nmin(five), nmax(five), five.shape)
+    print(nmin(six), nmax(six), six.shape)
+    print(nmin(seven), nmax(seven), seven.shape)
+    print(nmin(eight), nmax(eight), eight.shape)
+    assert (five >= -1.3).all() and (five <= 210).all()
+    assert (six >= -1.3).all() and (six <= 1000).all()
+    assert (seven >= 0).all() and (seven <= 9).all()
+    assert (eight >= 0).all() and (eight <= 9).all()
+    assert five.shape[0] == seven.shape[0]
+    assert five.shape[1] == six.shape[1]
+    assert six.shape[0] == eight.shape[0]
+    assert len(seven.shape) == len(eight.shape)
+
+    pca_test = PCA()
+    pca_test.fit_transform(full((41000, 784), 0.1))
+    pca_test.transform(full((1000, 784), 0.2))
+    pcv = plot_cumulative_variance(pca_test)
+    print(nmin(pcv), nmax(pcv), len(pcv))
+    assert (array(pcv) == full((784,), 1)).all()
+
+    forw = forward(full((41000, 784), 0.1), full((784, 10), 0.2), full((10,), 0.3))
+    print(nmin(forw), nmax(forw), forw.shape)
+    assert (forw == full((41000, 10), 0.1)).all()
 
     show()
