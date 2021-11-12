@@ -1,66 +1,76 @@
 """
 utility script
 """
-from os.path import join, dirname, exists
+from types import SimpleNamespace
+from os.path import exists
 from sys import exit as sexit
-import numpy as np
-import pandas as pd
-import matplotlib.pyplot as plt
+from numpy import (
+    argmax,
+    mean,
+    vstack,
+    array,
+    linspace,
+    empty,
+    place,
+    zeros,
+    log,
+    exp,
+    cos,
+    sin,
+    pi,
+    sqrt,
+    float32,
+    int32,
+)
+from numpy.random import randn, shuffle
+from pandas import DataFrame, read_csv
+from matplotlib.pyplot import show, plot, figure
 from sklearn.decomposition import PCA
-from sklearn.linear_model import LogisticRegression
 
 
 def get_clouds():
-    Nclass = 500
-    D = 2
-
-    X1 = np.random.randn(Nclass, D) + np.array([0, -2])
-    X2 = np.random.randn(Nclass, D) + np.array([2, 2])
-    X3 = np.random.randn(Nclass, D) + np.array([-2, 2])
-    X = np.vstack([X1, X2, X3])
-
-    Y = np.array([0] * Nclass + [1] * Nclass + [2] * Nclass)
-    return X, Y
+    """
+    get clouds function
+    """
+    n_class = 500
+    d_0 = 2
+    x_1 = randn(n_class, d_0) + array([0, -2])
+    x_2 = randn(n_class, d_0) + array([2, 2])
+    x_3 = randn(n_class, d_0) + array([-2, 2])
+    x_0 = vstack([x_1, x_2, x_3])
+    y_0 = array([0] * n_class + [1] * n_class + [2] * n_class)
+    return x_0, y_0
 
 
 def get_spiral():
-    # Idea: radius -> low...high
-    #           (don't start at 0, otherwise points will be "mushed" at origin)
-    #       angle = low...high proportional to radius
-    #               [0, 2pi/6, 4pi/6, ..., 10pi/6] --> [pi/2, pi/3 + pi/2, ..., ]
-    # x = rcos(theta), y = rsin(theta) as usual
-
-    radius = np.linspace(1, 10, 100)
-    thetas = np.empty((6, 100))
+    """
+    get spiral function
+    """
+    radius = linspace(1, 10, 100)
+    thetas = empty((6, 100))
     for i in range(6):
-        start_angle = np.pi * i / 3.0
-        end_angle = start_angle + np.pi / 2
-        points = np.linspace(start_angle, end_angle, 100)
+        start_angle = pi * i / 3.0
+        end_angle = start_angle + pi / 2
+        points = linspace(start_angle, end_angle, 100)
         thetas[i] = points
-
-    # convert into cartesian coordinates
-    x1 = np.empty((6, 100))
-    x2 = np.empty((6, 100))
+    x_1 = empty((6, 100))
+    x_2 = empty((6, 100))
     for i in range(6):
-        x1[i] = radius * np.cos(thetas[i])
-        x2[i] = radius * np.sin(thetas[i])
-
-    # inputs
-    X = np.empty((600, 2))
-    X[:, 0] = x1.flatten()
-    X[:, 1] = x2.flatten()
-
-    # add noise
-    X += np.random.randn(600, 2) * 0.5
-
-    # targets
-    Y = np.array([0] * 100 + [1] * 100 + [0] * 100 + [1] * 100 + [0] * 100 + [1] * 100)
-    return X, Y
+        x_1[i] = radius * cos(thetas[i])
+        x_2[i] = radius * sin(thetas[i])
+    x_0 = empty((600, 2))
+    x_0[:, 0] = x_1.flatten()
+    x_0[:, 1] = x_2.flatten()
+    x_0 += randn(600, 2) * 0.5
+    y_0 = array([0] * 100 + [1] * 100 + [0] * 100 + [1] * 100 + [0] * 100 + [1] * 100)
+    return x_0, y_0
 
 
 def get_transformed_data():
+    """
+    get transformed data function
+    """
     print("Reading in and transforming data...")
-
     if not exists("train.csv"):
         print("Looking for train.csv")
         print(
@@ -69,47 +79,36 @@ def get_transformed_data():
         print("Please get the data from: https://www.kaggle.com/c/digit-recognizer")
         print("Place train.csv in the folder large_files adjacent to the class folder")
         sexit()
-
-    df = pd.read_csv("train.csv")
-    data = df.values.astype(np.float32)
-    np.random.shuffle(data)
-
-    X = data[:, 1:]
-    Y = data[:, 0].astype(np.int32)
-
-    Xtrain = X[:-1000]
-    Ytrain = Y[:-1000]
-    Xtest = X[-1000:]
-    Ytest = Y[-1000:]
-
-    # center the data
-    mu = Xtrain.mean(axis=0)
-    Xtrain = Xtrain - mu
-    Xtest = Xtest - mu
-
-    # transform the data
+    d_f = DataFrame(read_csv("train.csv"))
+    data = d_f.values.astype(float32)
+    shuffle(data)
+    x_0 = data[:, 1:]
+    y_0 = data[:, 0].astype(int32)
+    x_train = x_0[:-1000]
+    y_train = y_0[:-1000]
+    x_test = x_0[-1000:]
+    y_test = y_0[-1000:]
+    m_u = x_train.mean(axis=0)
+    x_train = x_train - m_u
+    x_test = x_test - m_u
     pca = PCA()
-    Ztrain = pca.fit_transform(Xtrain)
-    Ztest = pca.transform(Xtest)
-
+    x_train = pca.fit_transform(x_train)
+    x_test = pca.transform(x_test)
     plot_cumulative_variance(pca)
-
-    # take first 300 cols of Z
-    Ztrain = Ztrain[:, :300]
-    Ztest = Ztest[:, :300]
-
-    # normalize Z
-    mu = Ztrain.mean(axis=0)
-    std = Ztrain.std(axis=0)
-    Ztrain = (Ztrain - mu) / std
-    Ztest = (Ztest - mu) / std
-
-    return Ztrain, Ztest, Ytrain, Ytest
+    x_train = x_train[:, :300]
+    x_test = x_test[:, :300]
+    m_u = x_train.mean(axis=0)
+    std = x_train.std(axis=0)
+    x_train = (x_train - m_u) / std
+    x_test = (x_test - m_u) / std
+    return x_train, x_test, y_train, y_test
 
 
 def get_normalized_data():
+    """
+    get normalized data function
+    """
     print("Reading in and transforming data...")
-
     if not exists("train.csv"):
         print("Looking for train.csv")
         print(
@@ -118,189 +117,219 @@ def get_normalized_data():
         print("Please get the data from: https://www.kaggle.com/c/digit-recognizer")
         print("Place train.csv in the folder large_files adjacent to the class folder")
         sexit()
-
-    df = pd.read_csv("train.csv")
-    data = df.values.astype(np.float32)
-    np.random.shuffle(data)
-    X = data[:, 1:]
-    Y = data[:, 0]
-
-    Xtrain = X[:-1000]
-    Ytrain = Y[:-1000]
-    Xtest = X[-1000:]
-    Ytest = Y[-1000:]
-
-    # normalize the data
-    mu = Xtrain.mean(axis=0)
-    std = Xtrain.std(axis=0)
-    np.place(std, std == 0, 1)
-    Xtrain = (Xtrain - mu) / std
-    Xtest = (Xtest - mu) / std
-
-    return Xtrain, Xtest, Ytrain, Ytest
+    d_f = DataFrame(read_csv("train.csv"))
+    data = d_f.values.astype(float32)
+    shuffle(data)
+    x_0 = data[:, 1:]
+    y_0 = data[:, 0]
+    x_train = x_0[:-1000]
+    y_train = y_0[:-1000]
+    x_test = x_0[-1000:]
+    y_test = y_0[-1000:]
+    m_u = x_train.mean(axis=0)
+    std = x_train.std(axis=0)
+    place(std, std == 0, 1)
+    x_train = (x_train - m_u) / std
+    x_test = (x_test - m_u) / std
+    return x_train, x_test, y_train, y_test
 
 
 def plot_cumulative_variance(pca):
-    P = []
-    for p in pca.explained_variance_ratio_:
-        if len(P) == 0:
-            P.append(p)
+    """
+    plot cumulative variance function
+    """
+    p_0 = []
+    for p_1 in pca.explained_variance_ratio_:
+        if len(p_0) == 0:
+            p_0.append(p_1)
         else:
-            P.append(p + P[-1])
-    plt.plot(P)
-    plt.show()
-    return P
+            p_0.append(p_1 + p_0[-1])
+    figure()
+    plot(p_0)
+    return p_0
 
 
-def forward(X, W, b):
-    # softmax
-    a = X.dot(W) + b
-    expa = np.exp(a)
-    y = expa / expa.sum(axis=1, keepdims=True)
-    return y
+def forward(x_0, w_0, b_0):
+    """
+    forward function
+    """
+    a_0 = x_0.dot(w_0) + b_0
+    expa = exp(a_0)
+    y_0 = expa / expa.sum(axis=1, keepdims=True)
+    return y_0
 
 
 def predict(p_y):
-    return np.argmax(p_y, axis=1)
+    """
+    predict function
+    """
+    return argmax(p_y, axis=1)
 
 
-def error_rate(p_y, t):
+def error_rate(p_y, t_0):
+    """
+    error rate function
+    """
     prediction = predict(p_y)
-    return np.mean(prediction != t)
+    return mean(prediction != t_0)
 
 
-def cost(p_y, t):
-    tot = t * np.log(p_y)
+def cost(p_y, t_0):
+    """
+    cost function
+    """
+    tot = t_0 * log(p_y)
     return -tot.sum()
 
 
-def gradW(t, y, X):
-    return X.T.dot(t - y)
+def grad_w(t_0, y_0, x_0):
+    """
+    grad w function
+    """
+    return x_0.T.dot(t_0 - y_0)
 
 
-def gradb(t, y):
-    return (t - y).sum(axis=0)
+def gradb(t_0, y_0):
+    """
+    gradb function
+    """
+    return (t_0 - y_0).sum(axis=0)
 
 
-def y2indicator(y):
-    N = len(y)
-    y = y.astype(np.int32)
-    ind = np.zeros((N, 10))
-    for i in range(N):
-        ind[i, y[i]] = 1
+def y2indicator(y_0):
+    """
+    y2indicator function
+    """
+    n_0 = len(y_0)
+    y_0 = y_0.astype(int32)
+    ind = zeros((n_0, 10))
+    for i in range(n_0):
+        ind[i, y_0[i]] = 1
     return ind
 
 
-def benchmark_full():
-    Xtrain, Xtest, Ytrain, Ytest = get_normalized_data()
+def decorator(func):
+    """
+    decorator function
+    """
 
+    def wrapper():
+        self = func()
+        if self:
+            for items in self.__dict__.items():
+                print(items)
+        return self
+
+    return wrapper
+
+
+@decorator
+def benchmark_full(self=SimpleNamespace()):
+    """
+    benchmark full function
+    """
+    self.Xtrain, self.Xtest, self.Ytrain, self.Ytest = get_normalized_data()
     print("Performing logistic regression...")
-    # lr = LogisticRegression(solver='lbfgs')
-
-    # convert Ytrain and Ytest to (N x K) matrices of indicator variables
-    _, D = Xtrain.shape
-    Ytrain_ind = y2indicator(Ytrain)
-    Ytest_ind = y2indicator(Ytest)
-
-    W = np.random.randn(D, 10) / np.sqrt(D)
-    b = np.zeros(10)
-    LL = []
-    LLtest = []
-    CRtest = []
-
-    # reg = 1
-    # learning rate 0.0001 is too high, 0.00005 is also too high
-    # 0.00003 / 2000 iterations => 0.363 error, -7630 cost
-    # 0.00004 / 1000 iterations => 0.295 error, -7902 cost
-    # 0.00004 / 2000 iterations => 0.321 error, -7528 cost
-
-    # reg = 0.1, still around 0.31 error
-    # reg = 0.01, still around 0.31 error
-    lr = 0.00004
-    reg = 0.01
+    _, self.D = self.Xtrain.shape
+    self.Ytrain_ind = y2indicator(self.Ytrain)
+    self.Ytest_ind = y2indicator(self.Ytest)
+    self.W = randn(self.D, 10) / sqrt(self.D)
+    self.b = zeros(10)
+    self.LL = []
+    self.LLtest = []
+    self.CRtest = []
+    self.lr = 0.00004
+    self.reg = 0.01
     for i in range(500):
-        p_y = forward(Xtrain, W, b)
-        # print "p_y:", p_y
-        ll = cost(p_y, Ytrain_ind)
-        LL.append(ll)
-
-        p_y_test = forward(Xtest, W, b)
-        lltest = cost(p_y_test, Ytest_ind)
-        LLtest.append(lltest)
-
-        err = error_rate(p_y_test, Ytest)
-        CRtest.append(err)
-
-        W += lr * (gradW(Ytrain_ind, p_y, Xtrain) - reg * W)
-        b += lr * (gradb(Ytrain_ind, p_y) - reg * b)
+        self.p_y = forward(self.Xtrain, self.W, self.b)
+        self.ll = cost(self.p_y, self.Ytrain_ind)
+        self.LL.append(self.ll)
+        self.p_y_test = forward(self.Xtest, self.W, self.b)
+        self.lltest = cost(self.p_y_test, self.Ytest_ind)
+        self.LLtest.append(self.lltest)
+        self.err = error_rate(self.p_y_test, self.Ytest)
+        self.CRtest.append(self.err)
+        self.W += self.lr * (
+            grad_w(self.Ytrain_ind, self.p_y, self.Xtrain) - self.reg * self.W
+        )
+        self.b += self.lr * (gradb(self.Ytrain_ind, self.p_y) - self.reg * self.b)
         if i % 10 == 0:
-            print(f"Cost at iteration {i}: {ll:.6f}")
-            print("Error rate:", err)
+            print(f"Cost at iteration {i}: {self.ll:.6f}")
+            print("Error rate:", self.err)
+    self.p_y = forward(self.Xtest, self.W, self.b)
+    print("Final error rate:", error_rate(self.p_y, self.Ytest))
+    self.iters = range(len(self.LL))
+    figure()
+    plot(self.iters, self.LL, self.iters, self.LLtest)
+    figure()
+    plot(self.CRtest)
 
-    p_y = forward(Xtest, W, b)
-    print("Final error rate:", error_rate(p_y, Ytest))
-    iters = range(len(LL))
-    plt.plot(iters, LL, iters, LLtest)
-    plt.show()
-    plt.plot(CRtest)
-    plt.show()
+    return self
 
 
-def benchmark_pca():
-    Xtrain, Xtest, Ytrain, Ytest = get_transformed_data()
+@decorator
+def benchmark_pca(self=SimpleNamespace()):
+    """
+    benchmark pca function
+    """
+    self.Xtrain, self.Xtest, self.Ytrain, self.Ytest = get_transformed_data()
     print("Performing logistic regression...")
-
-    N, D = Xtrain.shape
-    Ytrain_ind = np.zeros((N, 10))
-    for i in range(N):
-        Ytrain_ind[i, Ytrain[i]] = 1
-
-    Ntest = len(Ytest)
-    Ytest_ind = np.zeros((Ntest, 10))
-    for i in range(Ntest):
-        Ytest_ind[i, Ytest[i]] = 1
-
-    W = np.random.randn(D, 10) / np.sqrt(D)
-    b = np.zeros(10)
-    LL = []
-    LLtest = []
-    CRtest = []
-
-    # D = 300 -> error = 0.07
-    lr = 0.0001
-    reg = 0.01
+    self.N, self.D = self.Xtrain.shape
+    self.Ytrain_ind = zeros((self.N, 10))
+    for i in range(self.N):
+        self.Ytrain_ind[i, self.Ytrain[i]] = 1
+    self.Ntest = len(self.Ytest)
+    self.Ytest_ind = zeros((self.Ntest, 10))
+    for i in range(self.Ntest):
+        self.Ytest_ind[i, self.Ytest[i]] = 1
+    self.W = randn(self.D, 10) / sqrt(self.D)
+    self.b = zeros(10)
+    self.LL = []
+    self.LLtest = []
+    self.CRtest = []
+    self.lr = 0.0001
+    self.reg = 0.01
     for i in range(200):
-        p_y = forward(Xtrain, W, b)
-        # print "p_y:", p_y
-        ll = cost(p_y, Ytrain_ind)
-        LL.append(ll)
-
-        p_y_test = forward(Xtest, W, b)
-        lltest = cost(p_y_test, Ytest_ind)
-        LLtest.append(lltest)
-
-        err = error_rate(p_y_test, Ytest)
-        CRtest.append(err)
-
-        W += lr * (gradW(Ytrain_ind, p_y, Xtrain) - reg * W)
-        b += lr * (gradb(Ytrain_ind, p_y) - reg * b)
+        self.p_y = forward(self.Xtrain, self.W, self.b)
+        self.ll = cost(self.p_y, self.Ytrain_ind)
+        self.LL.append(self.ll)
+        self.p_y_test = forward(self.Xtest, self.W, self.b)
+        self.lltest = cost(self.p_y_test, self.Ytest_ind)
+        self.LLtest.append(self.lltest)
+        self.err = error_rate(self.p_y_test, self.Ytest)
+        self.CRtest.append(self.err)
+        self.W += self.lr * (grad_w(self.Ytrain_ind, self.p_y, self.Xtrain) - self.reg * self.W)
+        self.b += self.lr * (gradb(self.Ytrain_ind, self.p_y) - self.reg * self.b)
         if i % 10 == 0:
-            print("Cost at iteration %d: %.6f" % (i, ll))
-            print("Error rate:", err)
+            print("Cost at iteration %d: %.6f" % (i, self.ll))
+            print("Error rate:", self.err)
+    self.p_y = forward(self.Xtest, self.W, self.b)
+    print("Final error rate:", error_rate(self.p_y, self.Ytest))
+    self.iters = range(len(self.LL))
+    figure()
+    plot(self.iters, self.LL, self.iters, self.LLtest)
+    figure()
+    plot(self.CRtest)
 
-    p_y = forward(Xtest, W, b)
-    print("Final error rate:", error_rate(p_y, Ytest))
-    iters = range(len(LL))
-    plt.plot(iters, LL, iters, LLtest)
-    plt.show()
-    plt.plot(CRtest)
-    plt.show()
+    return self
 
 
 if __name__ == "__main__":
-    benchmark_pca()
-    benchmark_full()
-    print(get_normalized_data())
-    print(get_transformed_data())
-    print(get_spiral())
-    print(get_clouds())
+    xcloud, ycloud = get_clouds()
+    print(xcloud, xcloud.shape)
+    print(ycloud, ycloud.shape)
+    assert xcloud.shape == (1500, 2)
+    assert ycloud.shape == (1500,)
+
+    xspiral, yspiral = get_spiral()
+    print(xspiral, xspiral.shape)
+    print(yspiral, yspiral.shape)
+    assert xspiral.shape == (600, 2)
+    assert yspiral.shape == (600,)
+    # print(benchmark_pca())
+    # print(benchmark_full())
+    # print(get_normalized_data())
+    # print(get_transformed_data())
+    # print(get_spiral())
+
+    show()

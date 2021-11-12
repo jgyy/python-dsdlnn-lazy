@@ -47,16 +47,40 @@ def derivative_b1(z_0, t_0, y_0, w_2):
 
 if __name__ == "__main__":
     py_batch, z00 = forward(
-        full((500, 784), 0.1),
-        full((784, 300), 0.1),
-        full((300,), 0.1),
-        full((300, 10), 0.1),
-        full((10,), 0.1),
+        full((500, 784), 0.01),
+        full((784, 300), 0.02),
+        full((300,), 0.03),
+        full((300, 10), 0.04),
+        full((10,), 0.05),
     )
-    assert (around(py_batch, 2) == full((500, 10), 0.1)).all()
-    assert (around(z00, 2) == full((500, 300), 7.94)).all()
-    w20 = derivative_w2(
-        full((500, 300), 0.1), full((500, 10), 0.2), full((500, 10), 0.3)
-    )
+    print(py_batch, py_batch.shape)
+    print(z00, z00.shape)
+    assert (around(py_batch, 4) == full((500, 10), 0.1)).all()
+    assert (around(z00, 4) == full((500, 300), 0.1868)).all()
+
+    w20 = derivative_w2(full((500, 300), 1), full((500, 10), 2), full((500, 10), 3))
     print(w20, w20.shape)
-    assert (around(w20, 2) == full((300, 10), 5)).all()
+    assert (around(w20, 4) == full((300, 10), 500)).all()
+
+    b20 = derivative_b2(full((500, 10), 1), full((500, 10), 2))
+    print(b20, b20.shape)
+    assert (around(b20, 4) == full((10,), 500)).all()
+
+    w10 = derivative_w1(
+        full((500, 784), 1),
+        full((500, 300), 2),
+        full((500, 10), 3),
+        full((500, 10), 4),
+        full((300, 10), 5),
+    )
+    print(w10, w10.shape)
+    assert (around(w10, 4) == full((784, 300), 25000)).all()
+
+    b10 = derivative_b1(
+        full((500, 300), 1),
+        full((500, 10), 2),
+        full((500, 10), 3),
+        full((300, 10), 4),
+    )
+    print(b10, b10.shape)
+    assert (around(b10, 4) == full((300,), 20000)).all()

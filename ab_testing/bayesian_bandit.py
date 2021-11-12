@@ -85,4 +85,8 @@ if __name__ == "__main__":
     print(ban.sample())
     assert isinstance(ban.pull(), bool)
     assert 0.1 <= ban.sample() <= 1
+    assert ban.p_var == 0.1
+    assert ban.a_var == 1
+    assert ban.b_var == 1
+    assert ban.n_var == 0
     show()

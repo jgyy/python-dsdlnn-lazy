@@ -1,7 +1,6 @@
 """
 Compare RMSprop with momentum vs. Adam
 """
-import time
 from types import SimpleNamespace
 from numpy import sqrt, zeros
 from numpy.random import randn
@@ -89,11 +88,6 @@ def iteration1(self):
                 derivative_w2(self.Z, self.Ybatch, self.pYbatch) + self.reg * self.W2
             )
             self.gb2 = derivative_b2(self.Ybatch, self.pYbatch) + self.reg * self.b2
-            test = derivative_b2(self.Ybatch, self.pYbatch)
-            print("self.Ybatch", self.Ybatch, self.Ybatch.shape)
-            print("self.pYbatch", self.pYbatch, self.pYbatch.shape)
-            print("test", test, test.shape)
-            time.sleep(9999)
             self.gW1 = (
                 derivative_w1(self.Xbatch, self.Z, self.Ybatch, self.pYbatch, self.W2)
                 + self.reg * self.W1
