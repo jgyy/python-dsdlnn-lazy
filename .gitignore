@@ -5,6 +5,7 @@ __pycache__/
 .DS_Store
 .vscode/
 train.csv
+fer2013.csv
 
 # C extensions
 *.so
